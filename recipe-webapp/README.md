@@ -19,23 +19,25 @@ https://nodejs.org
 (restart PowerShell after installing)
 
 ## Run server (1st Powershell window)
-<!-- cd to the repository server file -->
+(cd to the repository server file)
 cd server 
 
 npm install
 
-<!-- copy example env file to main -->
+(copy example env file to main)
 Copy-Item .env.example.txt .env
 
 npm run dev
 
+now keep THIS window open and run the below prompts in a new window
+
 ## Run client (2nd Powershell window)
-<!-- cd to the repository client file -->
+(cd to the repository client file)
 cd client 
 
 npm install 
 
-<!-- copy example env file to main -->
+( copy example env file to main)
 Copy-Item .env.example.txt .env
 
 npm run dev
