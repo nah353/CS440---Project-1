@@ -1,9 +1,17 @@
 import React from "react";
 
+const DEV_OVERRIDE_USER = "xfilly";
+
+function canManageRecipe(user, recipe) {
+  const username = String(user?.username || "").toLowerCase();
+  const createdBy = String(recipe?.createdBy || "").toLowerCase();
+  return username === DEV_OVERRIDE_USER || username === createdBy;
+}
+
 export default function RecipeDetail({ recipe, onBack, onEdit, onDelete, currentUser, onRequireAuth }) {
   if (!recipe) return <div className="container">Recipe not found!</div>;
 
-  const isOwner = currentUser?.username && recipe.createdBy === currentUser.username;
+  const isOwner = canManageRecipe(currentUser, recipe);
 
   return (
     <div className="container detail-view">

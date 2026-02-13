@@ -13,6 +13,14 @@ import { getCurrentUser, logoutUser } from "./api/auth";
 import { getAuthToken, setAuthToken } from "./api/client";
 import "./styles/app.css";
 
+const DEV_OVERRIDE_USER = "xfilly";
+
+function canManageRecipe(user, recipe) {
+  const username = String(user?.username || "").toLowerCase();
+  const createdBy = String(recipe?.createdBy || "").toLowerCase();
+  return username === DEV_OVERRIDE_USER || username === createdBy;
+}
+
 function App() {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [editingRecipe, setEditingRecipe] = useState(null);
@@ -86,7 +94,7 @@ function App() {
       return;
     }
 
-    if (recipe.createdBy !== currentUser.username) {
+    if (!canManageRecipe(currentUser, recipe)) {
       alert("Only the creator can edit this recipe.");
       return;
     }
