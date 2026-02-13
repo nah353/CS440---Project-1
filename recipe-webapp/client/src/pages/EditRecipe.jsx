@@ -1,15 +1,15 @@
 import React, { useState } from "react";
-import { createRecipe } from "../api/recipes";
+import { updateRecipe } from "../api/recipes";
 
-export default function AddRecipe({ onRecipeAdded }) {
+export default function EditRecipe({ recipe, onRecipeUpdated }) {
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    ingredients: "",
-    instructions: "",
+    title: recipe?.title || "",
+    description: recipe?.description || "",
+    ingredients: recipe?.ingredients?.join("\n") || "",
+    instructions: recipe?.instructions || "",
     imageFile: null
   });
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imagePreview, setImagePreview] = useState(recipe?.image || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -78,9 +78,9 @@ export default function AddRecipe({ onRecipeAdded }) {
         .map(ing => ing.trim())
         .filter(ing => ing.length > 0);
 
-      let imageBase64 = null;
+      let image = imagePreview;
       if (formData.imageFile) {
-        imageBase64 = imagePreview; // Already in base64 from FileReader
+        image = imagePreview; // Already in base64 from FileReader
       }
 
       const payload = {
@@ -88,36 +88,28 @@ export default function AddRecipe({ onRecipeAdded }) {
         description: formData.description.trim(),
         ingredients: ingredientsList,
         instructions: formData.instructions.trim(),
-        image: imageBase64
+        image: image
       };
 
-      console.log("Creating recipe with payload:", { ...payload, image: imageBase64 ? "base64 image" : null });
+      console.log("Updating recipe with payload:", { ...payload, image: image ? "base64 image" : null });
 
-      const newRecipe = await createRecipe(payload);
+      const updatedRecipe = await updateRecipe(recipe.id, payload);
       
-      console.log("Recipe created successfully:", newRecipe);
+      console.log("Recipe updated successfully:", updatedRecipe);
 
       setSuccess(true);
-      setFormData({
-        title: "",
-        description: "",
-        ingredients: "",
-        instructions: "",
-        imageFile: null
-      });
-      setImagePreview(null);
 
       // Call callback to update parent
-      if (onRecipeAdded) {
-        console.log("Calling onRecipeAdded callback");
-        onRecipeAdded(newRecipe);
+      if (onRecipeUpdated) {
+        console.log("Calling onRecipeUpdated callback");
+        onRecipeUpdated(updatedRecipe);
       }
 
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error("Error creating recipe:", err);
-      setError(err.message || "Failed to create recipe");
+      console.error("Error updating recipe:", err);
+      setError(err.message || "Failed to update recipe");
     } finally {
       setLoading(false);
     }
@@ -125,8 +117,8 @@ export default function AddRecipe({ onRecipeAdded }) {
 
   return (
     <div className="container">
-      <h1>Add Your Own Recipe</h1>
-      <p className="muted">Share your favorite recipe with the community!</p>
+      <h1>Edit Recipe</h1>
+      <p className="muted">Update your recipe details.</p>
       
       {success && (
         <p style={{ 
@@ -137,7 +129,7 @@ export default function AddRecipe({ onRecipeAdded }) {
           borderRadius: '4px',
           marginBottom: '16px'
         }}>
-          ✅ Recipe created successfully!
+          ✅ Recipe updated successfully!
         </p>
       )}
       {error && (
@@ -224,21 +216,6 @@ export default function AddRecipe({ onRecipeAdded }) {
           />
         </div>
 
-        {/* Difficulty */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ fontWeight: '600', color: 'var(--nau-gold)' }}>Difficulty *</label>
-          <select
-            name="difficulty"
-            value={formData.difficulty}
-            onChange={handleChange}
-            style={{ marginTop: '8px', width: '100%', padding: '10px' }}
-          >
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-          </select>
-        </div>
-
         {/* Instructions */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ fontWeight: '600', color: 'var(--nau-gold)' }}>Instructions *</label>
@@ -264,7 +241,7 @@ export default function AddRecipe({ onRecipeAdded }) {
             opacity: loading ? 0.6 : 1
           }}
         >
-          {loading ? "Creating Recipe..." : "Create Recipe"}
+          {loading ? "Updating Recipe..." : "Update Recipe"}
         </button>
       </form>
     </div>

@@ -1,5 +1,15 @@
 import dotenv from "dotenv";
-dotenv.config();
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Get the directory of this file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from the server root directory
+dotenv.config({ path: path.join(__dirname, "..", ".env") });
+
+console.log("Environment loaded from:", path.join(__dirname, "..", ".env"));
 
 import app from "./app.js";
 
