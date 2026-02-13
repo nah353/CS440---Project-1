@@ -13,31 +13,24 @@ v20.11.1
 Then:
 npm -v
 
+If you have permission errors at any point, open a new window as admin and run: "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser" 
+
+This allows scripts written locally to run
+
 If you get “node is not recognized”, install Node LTS:
 https://nodejs.org
 
 (restart PowerShell after installing)
 
-## Run server (1st Powershell window)
-(cd to the repository server file)
-cd server 
+## Run server 
+(make sure you are in a powershell window, and in the root folder)
+Setup everything:
 
-npm install
+npm run setup
 
-(copy example env file to main)
-Copy-Item .env.example.txt .env
+Add your API Key:
+Open server/.env and paste your Gemini Key.
 
-npm run dev
-
-now keep THIS window open and run the below prompts in a new window
-
-## Run client (2nd Powershell window)
-(cd to the repository client file)
-cd client 
-
-npm install 
-
-( copy example env file to main)
-Copy-Item .env.example.txt .env
+Run the App:
 
 npm run dev
