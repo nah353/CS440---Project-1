@@ -6,7 +6,11 @@ import RecipeDetail from "./pages/RecipeDetail";
 import MediaScanner from "./components/mediaScanner";
 import AddRecipe from "./pages/AddRecipe";
 import EditRecipe from "./pages/EditRecipe";
+import Auth from "./pages/Auth";
+import Account from "./pages/Account";
 import { fetchRecipes, deleteRecipe } from "./api/recipes";
+import { getCurrentUser, logoutUser } from "./api/auth";
+import { getAuthToken, setAuthToken } from "./api/client";
 import "./styles/app.css";
 
 function App() {
@@ -16,10 +20,29 @@ function App() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     loadRecipes();
+    restoreSession();
   }, []);
+
+  const restoreSession = async () => {
+    const token = getAuthToken();
+    if (!token) {
+      return;
+    }
+
+    try {
+      const data = await getCurrentUser();
+      setCurrentUser(data.user);
+    } catch (error) {
+      console.warn("Session restore failed:", error);
+      setAuthToken(null);
+      setCurrentUser(null);
+    } finally {
+    }
+  };
 
   const loadRecipes = async () => {
     setLoading(true);
@@ -41,7 +64,33 @@ function App() {
     setPage("home");
   };
 
+  const handleAuthenticated = (user) => {
+    setCurrentUser(user);
+    setPage("home");
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.warn("Logout request failed:", error);
+    }
+    setAuthToken(null);
+    setCurrentUser(null);
+    setPage("home");
+  };
+
   const handleEditRecipe = (recipe) => {
+    if (!currentUser) {
+      setPage("auth");
+      return;
+    }
+
+    if (recipe.createdBy !== currentUser.username) {
+      alert("Only the creator can edit this recipe.");
+      return;
+    }
+
     console.log("Editing recipe:", recipe);
     setEditingRecipe(recipe);
     setSelectedRecipe(null);
@@ -84,7 +133,7 @@ function App() {
 
   return (
     <div className="app">
-      <Navbar setPage={setPage} currentPage={page} />
+      <Navbar setPage={setPage} currentPage={page} currentUser={currentUser} onLogout={handleLogout} />
 
       <main className="content">
         {page === "home" && (
@@ -158,7 +207,27 @@ function App() {
 
         {page === "add" && (
           <div className="center-panel">
-            <AddRecipe onRecipeAdded={handleNewRecipe} />
+            <AddRecipe onRecipeAdded={handleNewRecipe} currentUser={currentUser} onRequireAuth={() => setPage("auth")} />
+          </div>
+        )}
+
+        {page === "auth" && (
+          <div className="center-panel">
+            <Auth onAuthenticated={handleAuthenticated} />
+          </div>
+        )}
+
+        {page === "account" && (
+          <div>
+            <Account
+              currentUser={currentUser}
+              recipes={recipes}
+              onSelectRecipe={(recipe) => {
+                setSelectedRecipe(recipe);
+                setPage("home");
+              }}
+              onGoToAuth={() => setPage("auth")}
+            />
           </div>
         )}
 
@@ -175,12 +244,14 @@ function App() {
               onBack={() => setSelectedRecipe(null)}
               onEdit={handleEditRecipe}
               onDelete={handleDeleteRecipe}
+              currentUser={currentUser}
+              onRequireAuth={() => setPage("auth")}
             />
           </div>
         )}
       </main>
 
-      <FloatingActionButton onClick={() => setPage("add")} />
+      <FloatingActionButton onClick={() => setPage(currentUser ? "add" : "auth")} />
     </div>
   );
 }

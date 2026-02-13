@@ -15,6 +15,10 @@ export function getRecipeHandler(req, res) {
 
 export function createRecipeHandler(req, res) {
   try {
+    if (!req.user?.username) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
     const { title, description, ingredients, instructions, image } = req.body;
 
     console.log("Creating recipe with:", { title, description, ingredients: ingredients?.length || 0, instructions: instructions?.length || 0, image: image ? "base64" : null });
@@ -44,7 +48,8 @@ export function createRecipeHandler(req, res) {
       description: description ? description.trim() : "",
       ingredients: ingredients.map(ing => typeof ing === 'string' ? ing.trim() : ing).filter(ing => ing),
       instructions: instructions.trim(),
-      image: image || null
+      image: image || null,
+      createdBy: req.user.username
     });
 
     console.log("Recipe created successfully:", newRecipe.id, newRecipe.title);
@@ -58,6 +63,10 @@ export function createRecipeHandler(req, res) {
 
 export function updateRecipeHandler(req, res) {
   try {
+    if (!req.user?.username) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
     const id = Number(req.params.id);
     const { title, description, ingredients, instructions, image } = req.body;
 
@@ -67,6 +76,10 @@ export function updateRecipeHandler(req, res) {
     if (!recipe) {
       console.warn("Recipe not found:", id);
       return res.status(404).json({ error: "Recipe not found" });
+    }
+
+    if (recipe.createdBy !== req.user.username) {
+      return res.status(403).json({ error: "Only the creator can edit this recipe" });
     }
 
     // Validate required fields
@@ -107,7 +120,20 @@ export function updateRecipeHandler(req, res) {
 }
 
 export function deleteRecipeHandler(req, res) {
+  if (!req.user?.username) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
   const id = Number(req.params.id);
+  const recipe = getRecipeById(id);
+  if (!recipe) {
+    return res.status(404).json({ error: "Recipe not found" });
+  }
+
+  if (recipe.createdBy !== req.user.username) {
+    return res.status(403).json({ error: "Only the creator can delete this recipe" });
+  }
+
   const deleted = deleteRecipe(id);
   
   if (!deleted) {

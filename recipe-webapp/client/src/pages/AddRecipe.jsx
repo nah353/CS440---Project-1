@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { createRecipe } from "../api/recipes";
 
-export default function AddRecipe({ onRecipeAdded }) {
+export default function AddRecipe({ onRecipeAdded, currentUser, onRequireAuth }) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -62,6 +62,12 @@ export default function AddRecipe({ onRecipeAdded }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!currentUser) {
+      setError("You must be logged in to create a recipe.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -127,6 +133,34 @@ export default function AddRecipe({ onRecipeAdded }) {
     <div className="container">
       <h1>Add Your Own Recipe</h1>
       <p className="muted">Share your favorite recipe with the community!</p>
+
+      {!currentUser && (
+        <p style={{
+          color: '#ff6b6b',
+          padding: '12px',
+          background: 'rgba(255, 107, 107, 0.1)',
+          borderLeft: '4px solid #ff6b6b',
+          borderRadius: '4px',
+          marginBottom: '16px'
+        }}>
+          You need an account to publish recipes.
+          <button
+            type="button"
+            onClick={onRequireAuth}
+            style={{
+              marginLeft: '8px',
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--nau-gold)',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              padding: 0
+            }}
+          >
+            Login or sign up
+          </button>
+        </p>
+      )}
       
       {success && (
         <p style={{ 
@@ -254,14 +288,14 @@ export default function AddRecipe({ onRecipeAdded }) {
 
         <button 
           type="submit" 
-          disabled={loading}
+          disabled={loading || !currentUser}
           style={{ 
             width: '100%', 
             padding: '14px',
             fontSize: '16px',
             fontWeight: '700',
             cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.6 : 1
+            opacity: loading || !currentUser ? 0.6 : 1
           }}
         >
           {loading ? "Creating Recipe..." : "Create Recipe"}

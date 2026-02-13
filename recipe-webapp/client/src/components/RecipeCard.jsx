@@ -33,6 +33,9 @@ export default function RecipeCard({ recipes, onSelect }) {
             <p className="muted">
               {recipe.description || "No description provided for this delicious recipe."}
             </p>
+            <p className="small" style={{ marginBottom: '8px' }}>
+              Created by: {recipe.createdBy || "Unknown"}
+            </p>
             <span className="small">
               {recipe.ingredients?.length ?? 0} Ingredients
             </span>

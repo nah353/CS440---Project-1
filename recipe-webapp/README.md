@@ -1,186 +1,140 @@
-## 1) What this project is
+    # Recipe Webapp
 
-This app has **2 parts** that run at the same time:
+Full-stack recipe application with manual recipe publishing, account-based ownership, and Gemini-powered media analysis.
 
-- **Client** (the website you see) — runs on `http://localhost:5173`
-- **Server** (the backend/API) — runs on `http://localhost:4000`
+## Project Overview
 
-The project also uses a Google Gemini API key for AI recipe features.
-(This feature is currently in BETA, and is not funcitoning)
+This project has two apps that run together:
 
----
+- **Client** (`Vite + React`): `http://localhost:5173`
+- **Server** (`Express` API): `http://localhost:4000`
 
-## 2) Before you begin (one-time installs)
+Core capabilities:
 
-### A) Install Node.js (required)
+- View and search all recipes by title
+- Register, login, logout, and restore sessions from a stored token
+- Create recipes (authenticated)
+- Edit and delete only recipes you created
+- Upload an image/video for AI analysis (`/api/ai/analyze`) using Gemini
+- Track your own recipes from the **Account** page
 
-1. Go to: https://nodejs.org
-2. Download and install the **LTS** version.
-3. Close and reopen PowerShell after installation.
+## Tech Stack
 
-### B) Verify Node.js installed correctly
+- **Frontend:** React 18, Vite, React Router DOM
+- **Backend:** Node.js, Express, CORS, Multer, Dotenv
+- **Auth:** Bearer token sessions (in-memory) + password hashing via Node `crypto.scrypt`
+- **AI:** `@google/generative-ai` (Gemini model `gemini-1.5-flash`)
+- **Storage:** JSON files (`server/recipes.json`, `server/users.json`)
 
-Open PowerShell and run:
+## Prerequisites
+
+- Node.js LTS (recommended: 18+)
+- npm
+- (Optional for AI) Gemini API key from https://aistudio.google.com
+
+Verify install:
 
 ```powershell
 node -v
 npm -v
 ```
 
-You should see version numbers (for example `v20.x.x`).
-
-If you see "node is not recognized", Node is not installed correctly yet.
-
-### C) (If needed) Fix PowerShell script permission errors
-
-If commands fail with execution policy errors, run this once in PowerShell:
+If PowerShell blocks scripts:
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-Then type `Y` and press Enter.
+## Setup
 
----
-
-## 3) Open the project folder
-
-In PowerShell, navigate to the project:
+From the project folder:
 
 ```powershell
-cd ".......\CS440---Project-1\recipe-webapp"
-```
-
-You should now be inside the folder that contains:
-
-- `package.json`
-- `client/`
-- `server/`
-- `setup-env.js`
-
----
-
-## 4) Install dependencies and create `.env` files
-
-Run:
-
-```powershell
+cd "...\CS440---Project-1\recipe-webapp"
 npm run setup
 ```
 
-Wait until it finishes without errors.
+`npm run setup` will:
 
----
+1. Copy `.env.example` to `.env` for `client` and `server` (if missing)
+2. Install root dependencies
+3. Install client dependencies
+4. Install server AI-related dependencies
 
-## 5) Add your Gemini API key (required for AI features)
+## Environment Variables
 
-Project credits: **Daniel Travian** and **Nyle**.
-
-1. Get a key from: https://aistudio.google.com
-2. Open file `server/.env`
-3. Find this line:
-
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-4. Replace `your_gemini_api_key_here` with your real key.
-5. Save the file.
-
-### Reference: expected `.env` values
-
-`server/.env` should look like:
+### `server/.env`
 
 ```env
 PORT=4000
-GEMINI_API_KEY=PASTE_REAL_KEY_HERE
+GEMINI_API_KEY=your_gemini_api_key_here
 CORS_ORIGIN=http://localhost:5173
 ```
 
-`client/.env` should look like:
+### `client/.env`
 
 ```env
 VITE_API_BASE=http://localhost:4000/api
 ```
 
----
+> AI analysis endpoint requires `GEMINI_API_KEY`.
 
-## 6) Start the app
+## Run the App
 
-From the `recipe-webapp` folder, run:
+From `recipe-webapp`:
 
 ```powershell
 npm run dev
 ```
 
-This starts both server and client together.
+This runs both apps concurrently:
 
-When successful, you should see messages similar to:
+- Server: `npm --prefix ./server run dev`
+- Client: `npm --prefix ./client run dev`
 
-- `Server listening on http://localhost:4000`
-- Vite/client running on `http://localhost:5173`
+Open `http://localhost:5173`.
 
----
+## Current UI Behavior
 
-## 7) Open and use the app
+- **Home:** all recipes + title search
+- **Add Recipe:** requires login
+- **Account:** visible when logged in; shows only your recipes
+- **Recipe Detail:** only creator sees active edit/delete actions
+- **Scan Food:** marked as beta in UI; backend route is implemented
 
-1. Open your browser.
-2. Go to: **http://localhost:5173**
-3. You should see the Recipe Webapp interface.
+## Troubleshooting
 
----
+### `npm run dev` fails immediately
 
-## 8) Common problems and fixes
-
-### Problem: `node` or `npm` not recognized
-
-- Reinstall Node.js LTS from https://nodejs.org
-- Restart PowerShell after install
-
-### Problem: permission / script execution error in PowerShell
-
-Run:
+Make sure you are in:
 
 ```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+cd "...\CS440---Project-1\recipe-webapp"
 ```
 
-Then rerun your command.
+Then run:
 
-### Problem: Port already in use (`4000` or `5173`)
+```powershell
+npm run dev
+```
 
-- Close other apps/terminals that might already be running this project
-- Try `Ctrl + C` in old terminals
-- Run `npm run dev` again
+### Port already in use (`4000` or `5173`)
 
-### Problem: AI features fail or return key/auth errors
+- Stop previous terminals (`Ctrl + C`)
+- Close conflicting apps and rerun
 
-- Reopen `server/.env`
-- Confirm `GEMINI_API_KEY` has a real key (no quotes, no extra spaces)
-- Restart the app after editing `.env`
+### AI analyze errors
 
-### Problem: Browser opens but recipes/requests fail
+- Confirm `server/.env` has a real `GEMINI_API_KEY`
+- Restart server after editing `.env`
+- Check server logs for Gemini/API parsing details
+
+### Browser loads but API calls fail
 
 - Confirm server is running on `http://localhost:4000`
-- Confirm `client/.env` contains:
+- Confirm `client/.env` has `VITE_API_BASE=http://localhost:4000/api`
+- Restart client/server after env changes
 
-```env
-VITE_API_BASE=http://localhost:4000/api
-```
+## Credits
 
-- Stop and restart `npm run dev`
-
----
-
-## 10) Daily quick start (after first setup)
-
-After everything is installed once, usually you only need:
-
-```powershell
-cd "......\CS440---Project-1\recipe-webapp"
-npm run dev
-```
-
-Open: `http://localhost:5173`
-
----
+Project credits: **Daniel Nyle and Travian**.

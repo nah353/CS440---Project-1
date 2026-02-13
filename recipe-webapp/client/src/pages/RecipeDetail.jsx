@@ -1,30 +1,44 @@
 import React from "react";
 
-export default function RecipeDetail({ recipe, onBack, onEdit, onDelete }) {
+export default function RecipeDetail({ recipe, onBack, onEdit, onDelete, currentUser, onRequireAuth }) {
   if (!recipe) return <div className="container">Recipe not found!</div>;
+
+  const isOwner = currentUser?.username && recipe.createdBy === currentUser.username;
 
   return (
     <div className="container detail-view">
       <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
         <button className="upload-btn" onClick={onBack}>← Back</button>
-        <button 
-          className="upload-btn"
-          onClick={() => onEdit(recipe)}
-          style={{ background: 'var(--nau-blue)', flex: 1 }}
-        >
-          Edit Recipe
-        </button>
-        <button 
-          className="upload-btn"
-          onClick={() => {
-            if (confirm("Are you sure you want to delete this recipe?")) {
-              onDelete(recipe.id);
-            }
-          }}
-          style={{ background: '#ff6b6b' }}
-        >
-          Delete
-        </button>
+        {isOwner ? (
+          <>
+            <button
+              className="upload-btn"
+              onClick={() => onEdit(recipe)}
+              style={{ background: 'var(--nau-blue)', flex: 1 }}
+            >
+              Edit Recipe
+            </button>
+            <button
+              className="upload-btn"
+              onClick={() => {
+                if (confirm("Are you sure you want to delete this recipe?")) {
+                  onDelete(recipe.id);
+                }
+              }}
+              style={{ background: '#ff6b6b' }}
+            >
+              Delete
+            </button>
+          </>
+        ) : (
+          <button
+            className="upload-btn"
+            onClick={onRequireAuth}
+            style={{ background: 'var(--nau-blue)', flex: 1 }}
+          >
+            {currentUser ? "Only creator can edit" : "Login to manage your recipes"}
+          </button>
+        )}
       </div>
       
       {recipe.image && (
@@ -51,6 +65,9 @@ export default function RecipeDetail({ recipe, onBack, onEdit, onDelete }) {
       <div className="scanner-hero" style={{marginTop: recipe.image ? '0' : '20px', textAlign: 'left'}}>
         <span className="tag" style={{background: 'var(--nau-gold)', color: 'var(--bg-dark)'}}>NAU Recipe Lab</span>
         <h1 style={{fontSize: '3rem'}}>{recipe.title}</h1>
+        <p className="small" style={{ marginTop: '0', color: 'var(--text-secondary)' }}>
+          Created by: {recipe.createdBy || "Unknown"}
+        </p>
         <p>{recipe.description || "A delicious recipe to enjoy!"}</p>
       </div>
 

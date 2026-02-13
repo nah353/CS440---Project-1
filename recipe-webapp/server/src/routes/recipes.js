@@ -6,13 +6,14 @@ import {
   updateRecipeHandler,
   deleteRecipeHandler
 } from "../controllers/recipesController.js";
+import { authRequired } from "../auth.js";
 
 const router = Router();
 
 router.get("/", listRecipesHandler);
-router.post("/", createRecipeHandler);
+router.post("/", authRequired, createRecipeHandler);
 router.get("/:id", getRecipeHandler);
-router.put("/:id", updateRecipeHandler);
-router.delete("/:id", deleteRecipeHandler);
+router.put("/:id", authRequired, updateRecipeHandler);
+router.delete("/:id", authRequired, deleteRecipeHandler);
 
 export default router;
