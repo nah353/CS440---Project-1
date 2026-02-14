@@ -36,6 +36,15 @@ export function createRecipeHandler(req, res) {
       return res.status(400).json({ error: "title and instructions are required" });
     }
 
+    // Validate lengths
+    if (title && String(title).trim().length > 30) {
+      return res.status(400).json({ error: "title must be 30 characters or fewer" });
+    }
+
+    if (description && String(description).trim().length > 120) {
+      return res.status(400).json({ error: "description must be 120 characters or fewer" });
+    }
+
     // Validate ingredients
     if (!Array.isArray(ingredients)) {
       return res.status(400).json({ error: "ingredients must be an array" });
@@ -93,6 +102,15 @@ export function updateRecipeHandler(req, res) {
     // Validate required fields
     if (!title || !instructions) {
       return res.status(400).json({ error: "title and instructions are required" });
+    }
+
+    // Validate lengths
+    if (title && String(title).trim().length > 30) {
+      return res.status(400).json({ error: "title must be 30 characters or fewer" });
+    }
+
+    if (description && String(description).trim().length > 120) {
+      return res.status(400).json({ error: "description must be 120 characters or fewer" });
     }
 
     // Validate ingredients

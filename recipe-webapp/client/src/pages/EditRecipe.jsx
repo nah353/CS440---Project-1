@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { updateRecipe } from "../api/recipes";
 
 export default function EditRecipe({ recipe, onRecipeUpdated }) {
@@ -10,6 +10,7 @@ export default function EditRecipe({ recipe, onRecipeUpdated }) {
     imageFile: null
   });
   const [imagePreview, setImagePreview] = useState(recipe?.image || null);
+  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -60,15 +61,35 @@ export default function EditRecipe({ recipe, onRecipeUpdated }) {
     }
   };
 
+  const handleClearImage = () => {
+    setFormData(prev => ({ ...prev, imageFile: null }));
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setError(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccess(false);
 
-    try {
+      try {
       if (!formData.title.trim() || !formData.instructions.trim()) {
         setError("Title and Instructions are required.");
+        setLoading(false);
+        return;
+      }
+
+      // Client-side length validation
+      if (formData.title.trim().length > 30) {
+        setError("Title must be 30 characters or fewer.");
+        setLoading(false);
+        return;
+      }
+
+      if (formData.description && formData.description.trim().length > 120) {
+        setError("Description must be 120 characters or fewer.");
         setLoading(false);
         return;
       }
@@ -167,12 +188,32 @@ export default function EditRecipe({ recipe, onRecipeUpdated }) {
               />
             </div>
           )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            style={{ marginTop: '8px' }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              ref={fileInputRef}
+            />
+            {(formData.imageFile || imagePreview) && (
+              <button
+                type="button"
+                onClick={handleClearImage}
+                aria-label="Remove image"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(0,0,0,0.12)',
+                  borderRadius: '4px',
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  color: 'var(--nau-gold)',
+                  fontWeight: 700
+                }}
+              >
+                X
+              </button>
+            )}
+          </div>
           <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>
             Max 5MB. Supported: JPG, PNG, GIF
           </p>
@@ -188,7 +229,11 @@ export default function EditRecipe({ recipe, onRecipeUpdated }) {
             value={formData.title}
             onChange={handleChange}
             required
+            maxLength={30}
           />
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '6px' }}>
+            {formData.title.length}/30 characters
+          </div>
         </div>
 
         {/* Description */}
@@ -199,8 +244,12 @@ export default function EditRecipe({ recipe, onRecipeUpdated }) {
             placeholder="Describe your dish..."
             value={formData.description}
             onChange={handleChange}
+            maxLength={120}
             style={{ width: '100%', padding: '12px', marginTop: '8px', height: '80px' }}
           />
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '6px' }}>
+            {formData.description.length}/120 characters
+          </div>
         </div>
 
         {/* Ingredients */}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { createRecipe } from "../api/recipes";
 
 export default function AddRecipe({ onRecipeAdded, currentUser, onRequireAuth }) {
@@ -10,6 +10,7 @@ export default function AddRecipe({ onRecipeAdded, currentUser, onRequireAuth })
     imageFile: null
   });
   const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -58,6 +59,13 @@ export default function AddRecipe({ onRecipeAdded, currentUser, onRequireAuth })
       reader.readAsDataURL(file);
       setError(null);
     }
+  };
+
+  const handleClearImage = () => {
+    setFormData(prev => ({ ...prev, imageFile: null }));
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setError(null);
   };
 
   const handleSubmit = async (e) => {
@@ -209,12 +217,32 @@ export default function AddRecipe({ onRecipeAdded, currentUser, onRequireAuth })
               />
             </div>
           )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            style={{ marginTop: '8px' }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              ref={fileInputRef}
+            />
+            {(formData.imageFile || imagePreview) && (
+              <button
+                type="button"
+                onClick={handleClearImage}
+                aria-label="Remove image"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(0,0,0,0.12)',
+                  borderRadius: '4px',
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  color: '#b00020',
+                  fontWeight: 700
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
           <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>
             Max 5MB. Supported: JPG, PNG, GIF
           </p>
@@ -230,7 +258,11 @@ export default function AddRecipe({ onRecipeAdded, currentUser, onRequireAuth })
             value={formData.title}
             onChange={handleChange}
             required
+            maxLength={30}
           />
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '6px' }}>
+            {formData.title.length}/30 characters
+          </div>
         </div>
 
         {/* Description */}
@@ -241,8 +273,12 @@ export default function AddRecipe({ onRecipeAdded, currentUser, onRequireAuth })
             placeholder="Describe your dish..."
             value={formData.description}
             onChange={handleChange}
+            maxLength={120}
             style={{ width: '100%', padding: '12px', marginTop: '8px', height: '80px' }}
           />
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '6px' }}>
+            {formData.description.length}/120 characters
+          </div>
         </div>
 
         {/* Ingredients */}
