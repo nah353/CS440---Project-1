@@ -22,11 +22,41 @@ function buildHeaders(extraHeaders = {}) {
   };
 }
 
+async function throwApiError(res, method, path) {
+  let message = `${method} ${path} failed with status ${res.status}`;
+
+  try {
+    const data = await res.json();
+    message = data.error || data.message || message;
+    if (data.details) message += `: ${data.details}`;
+  } catch (e) {
+    const text = await res.text();
+    if (text) message = text;
+  }
+
+  const isAuthError =
+    res.status === 401 && /invalid or expired token|authentication required/i.test(message);
+
+  if (isAuthError) {
+    setAuthToken(null);
+    message = "Session expired. Please log in again.";
+  }
+
+  const error = new Error(message);
+  error.status = res.status;
+  if (isAuthError) {
+    error.code = "AUTH_EXPIRED";
+  }
+  throw error;
+}
+
 export async function apiGet(path) {
   const res = await fetch(`${BASE}${path}`, {
     headers: buildHeaders()
   });
-  if (!res.ok) throw new Error(`GET ${path} failed`);
+  if (!res.ok) {
+    await throwApiError(res, "GET", path);
+  }
   return res.json();
 }
 
@@ -38,8 +68,7 @@ export async function apiPost(path, body) {
   });
 
   if (!res.ok) {
-    const msg = await res.text();
-    throw new Error(`POST ${path} failed: ${msg}`);
+    await throwApiError(res, "POST", path);
   }
   return res.json();
 }
@@ -52,16 +81,7 @@ export async function apiPut(path, body) {
   });
 
   if (!res.ok) {
-    let errorMsg = `PUT ${path} failed with status ${res.status}`;
-    try {
-      const data = await res.json();
-      errorMsg = data.error || data.message || errorMsg;
-      if (data.details) errorMsg += `: ${data.details}`;
-    } catch (e) {
-      const text = await res.text();
-      if (text) errorMsg = text;
-    }
-    throw new Error(errorMsg);
+    await throwApiError(res, "PUT", path);
   }
   return res.json();
 }
@@ -73,16 +93,7 @@ export async function apiDelete(path) {
   });
 
   if (!res.ok) {
-    let errorMsg = `DELETE ${path} failed with status ${res.status}`;
-    try {
-      const data = await res.json();
-      errorMsg = data.error || data.message || errorMsg;
-      if (data.details) errorMsg += `: ${data.details}`;
-    } catch (e) {
-      const text = await res.text();
-      if (text) errorMsg = text;
-    }
-    throw new Error(errorMsg);
+    await throwApiError(res, "DELETE", path);
   }
   return res.json();
 }
