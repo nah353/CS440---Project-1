@@ -137,4 +137,4 @@ npm run dev
 
 ## Credits
 
-Project credits: **Daniel Nyle and Travian**.
+Project credits: **Daniel Fillerup, Nyle Huntley, and Travian Lenox**.
